@@ -16,12 +16,35 @@
 
 <!-- LOGIN -->
 <div id="loginBox" class="h-screen flex items-center justify-center">
-  <div class="bg-white p-6 rounded-2xl w-80 text-center shadow">
-    <h1 class="text-xl font-bold mb-4">💰 Money App</h1>
+  <div class="bg-white p-6 rounded-2xl w-80 text-center shadow space-y-3">
+
+    <h1 class="text-xl font-bold">💰 Money App</h1>
+
+    <!-- EMAIL LOGIN -->
+    <input id="email" type="email" placeholder="Gmail"
+      class="w-full border p-2 rounded">
+
+    <input id="password" type="password" placeholder="Password"
+      class="w-full border p-2 rounded">
+
+    <button onclick="emailLogin()"
+      class="w-full py-2 bg-indigo-500 text-white rounded-xl">
+      🔐 เข้าสู่ระบบ
+    </button>
+
+    <button onclick="emailRegister()"
+      class="w-full py-2 bg-emerald-500 text-white rounded-xl">
+      📝 สมัครสมาชิก
+    </button>
+
+    <div class="text-sm text-gray-400">หรือ</div>
+
+    <!-- GOOGLE LOGIN -->
     <button onclick="googleLogin()"
       class="w-full py-3 bg-red-500 text-white rounded-xl">
       🔐 เข้าสู่ระบบด้วย Google
     </button>
+
   </div>
 </div>
 
@@ -54,7 +77,9 @@
       <option value="income">➕ รายรับ</option>
       <option value="expense">➖ รายจ่าย</option>
     </select>
+
     <input id="amount" type="number" class="w-full border p-2 rounded" placeholder="จำนวนเงิน">
+
     <button onclick="addTransaction()"
       class="w-full bg-indigo-500 text-white py-2 rounded-xl">
       บันทึก
@@ -64,14 +89,19 @@
   <!-- SALARY -->
   <div class="bg-white p-4 rounded-xl shadow space-y-2">
     <h3 class="font-bold">💵 คำนวณเงินเดือน</h3>
+
     <input id="salary" type="number" class="border p-2 w-full" placeholder="เงินเดือน">
     <input id="ot1" type="number" class="border p-2 w-full" placeholder="OT x1">
     <input id="ot15" type="number" class="border p-2 w-full" placeholder="OT x1.5">
     <input id="ot2" type="number" class="border p-2 w-full" placeholder="OT x2">
+
     <button onclick="calcSalary()" class="w-full bg-emerald-500 text-white py-2 rounded-xl">
       คำนวณ
     </button>
-    <p class="text-center font-bold">สุทธิ: <span id="netSalary">0</span></p>
+
+    <p class="text-center font-bold">
+      สุทธิ: <span id="netSalary">0</span>
+    </p>
   </div>
 
 </div>
