@@ -1,25 +1,17 @@
-// ================== IMPORT FIREBASE ==================
+// ===== FIREBASE CONFIG =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  signOut,
   onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import {
-  getDatabase,
-  ref,
-  push,
-  onValue
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-
-// ================== FIREBASE CONFIG ==================
+// config ของคุณ
 const firebaseConfig = {
   apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
   authDomain: "new-936d3.firebaseapp.com",
@@ -31,149 +23,71 @@ const firebaseConfig = {
   measurementId: "G-YLL5SJ6X1S"
 };
 
-
-// ================== INIT ==================
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const db = getDatabase(app);
 
-let currentUser = null;
-let loginLoading = false;
-
-
-// ================== GOOGLE LOGIN ==================
-window.googleLogin = function () {
-
-  if (loginLoading) return;
-  loginLoading = true;
-
-  signInWithPopup(auth, provider)
-    .then(() => console.log("login success"))
-    .catch(err => {
-      if (err.code !== "auth/cancelled-popup-request") {
-        alert(err.message);
-      }
-    })
-    .finally(() => loginLoading = false);
-};
-
-
-// ================== EMAIL REGISTER ==================
-window.emailRegister = function () {
-
+// ===== LOGIN EMAIL =====
+window.loginEmail = async function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
   if (!email || !password) {
-    alert("กรอก Gmail และรหัสผ่านก่อน");
+    alert("กรอก email และ password");
     return;
   }
 
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => alert("สมัครสมาชิกสำเร็จ"))
-    .catch(err => alert(err.message));
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-
-// ================== EMAIL LOGIN ==================
-window.emailLogin = function () {
-
+// ===== REGISTER EMAIL =====
+window.registerEmail = async function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
   if (!email || !password) {
-    alert("กรอก Gmail และรหัสผ่านก่อน");
+    alert("กรอก email และ password");
     return;
   }
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => console.log("login success"))
-    .catch(err => alert(err.message));
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    alert("สมัครสมาชิกสำเร็จ");
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-
-// ================== LOGOUT ==================
-window.logout = function () {
-  signOut(auth);
+// ===== LOGIN GOOGLE =====
+window.googleLogin = async function () {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    if (err.code !== "auth/cancelled-popup-request") {
+      alert(err.message);
+    }
+  }
 };
 
+// ===== LOGOUT =====
+window.logout = async function () {
+  await signOut(auth);
+};
 
-// ================== CHECK LOGIN STATE ==================
+// ===== CHECK LOGIN STATE =====
 onAuthStateChanged(auth, (user) => {
+  const loginBox = document.getElementById("loginBox");
+  const appBox = document.getElementById("appBox");
 
   if (user) {
-    currentUser = user;
-
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("appBox").classList.remove("hidden");
-
-    loadTransactions();
+    loginBox.classList.add("hidden");
+    appBox.classList.remove("hidden");
   } else {
-    document.getElementById("loginBox").classList.remove("hidden");
-    document.getElementById("appBox").classList.add("hidden");
+    loginBox.classList.remove("hidden");
+    appBox.classList.add("hidden");
   }
 });
-
-
-// ================== ADD TRANSACTION ==================
-window.addTransaction = function () {
-
-  const type = document.getElementById("type").value;
-  const amount = Number(document.getElementById("amount").value);
-
-  if (!amount) {
-    alert("ใส่จำนวนเงินก่อน");
-    return;
-  }
-
-  push(ref(db, "transactions/" + currentUser.uid), {
-    type: type,
-    amount: amount,
-    date: Date.now()
-  });
-
-  document.getElementById("amount").value = "";
-};
-
-
-// ================== LOAD DATA ==================
-function loadTransactions() {
-
-  const txRef = ref(db, "transactions/" + currentUser.uid);
-
-  onValue(txRef, (snapshot) => {
-
-    let income = 0;
-    let expense = 0;
-
-    snapshot.forEach(item => {
-      const data = item.val();
-
-      if (data.type === "income") income += data.amount;
-      if (data.type === "expense") expense += data.amount;
-    });
-
-    document.getElementById("income").innerText = income;
-    document.getElementById("expense").innerText = expense;
-    document.getElementById("balance").innerText = income - expense;
-  });
-}
-
-
-// ================== CALC SALARY ==================
-window.calcSalary = function () {
-
-  const salary = Number(document.getElementById("salary").value || 0);
-  const ot1 = Number(document.getElementById("ot1").value || 0);
-  const ot15 = Number(document.getElementById("ot15").value || 0);
-  const ot2 = Number(document.getElementById("ot2").value || 0);
-
-  const total =
-    salary +
-    (ot1 * 100) +
-    (ot15 * 150) +
-    (ot2 * 200);
-
-  document.getElementById("netSalary").innerText = total;
-};
