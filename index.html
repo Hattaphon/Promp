@@ -20,26 +20,24 @@
 
     <h1 class="text-xl font-bold">💰 Money App</h1>
 
-    <!-- EMAIL LOGIN -->
-    <input id="email" type="email" placeholder="Gmail"
+    <input id="email" type="email" placeholder="Email"
       class="w-full border p-2 rounded">
 
     <input id="password" type="password" placeholder="Password"
       class="w-full border p-2 rounded">
 
-    <button onclick="emailLogin()"
-      class="w-full py-2 bg-indigo-500 text-white rounded-xl">
+    <button onclick="loginEmail()"
+      class="w-full py-3 bg-indigo-500 text-white rounded-xl">
       🔐 เข้าสู่ระบบ
     </button>
 
-    <button onclick="emailRegister()"
-      class="w-full py-2 bg-emerald-500 text-white rounded-xl">
+    <button onclick="registerEmail()"
+      class="w-full py-3 bg-green-500 text-white rounded-xl">
       📝 สมัครสมาชิก
     </button>
 
-    <div class="text-sm text-gray-400">หรือ</div>
+    <p class="text-sm text-gray-400">หรือ</p>
 
-    <!-- GOOGLE LOGIN -->
     <button onclick="googleLogin()"
       class="w-full py-3 bg-red-500 text-white rounded-xl">
       🔐 เข้าสู่ระบบด้วย Google
@@ -56,52 +54,8 @@
     <button onclick="logout()" class="text-red-500">ออก</button>
   </div>
 
-  <div class="grid grid-cols-3 gap-2 text-center">
-    <div class="bg-green-100 p-3 rounded-xl">
-      <p class="text-sm">รายรับ</p>
-      <p id="income" class="font-bold">0</p>
-    </div>
-    <div class="bg-rose-100 p-3 rounded-xl">
-      <p class="text-sm">รายจ่าย</p>
-      <p id="expense" class="font-bold">0</p>
-    </div>
-    <div class="bg-indigo-100 p-3 rounded-xl">
-      <p class="text-sm">คงเหลือ</p>
-      <p id="balance" class="font-bold">0</p>
-    </div>
-  </div>
-
-  <!-- ADD TRANSACTION -->
-  <div class="bg-white p-4 rounded-xl shadow space-y-2">
-    <select id="type" class="w-full border p-2 rounded">
-      <option value="income">➕ รายรับ</option>
-      <option value="expense">➖ รายจ่าย</option>
-    </select>
-
-    <input id="amount" type="number" class="w-full border p-2 rounded" placeholder="จำนวนเงิน">
-
-    <button onclick="addTransaction()"
-      class="w-full bg-indigo-500 text-white py-2 rounded-xl">
-      บันทึก
-    </button>
-  </div>
-
-  <!-- SALARY -->
-  <div class="bg-white p-4 rounded-xl shadow space-y-2">
-    <h3 class="font-bold">💵 คำนวณเงินเดือน</h3>
-
-    <input id="salary" type="number" class="border p-2 w-full" placeholder="เงินเดือน">
-    <input id="ot1" type="number" class="border p-2 w-full" placeholder="OT x1">
-    <input id="ot15" type="number" class="border p-2 w-full" placeholder="OT x1.5">
-    <input id="ot2" type="number" class="border p-2 w-full" placeholder="OT x2">
-
-    <button onclick="calcSalary()" class="w-full bg-emerald-500 text-white py-2 rounded-xl">
-      คำนวณ
-    </button>
-
-    <p class="text-center font-bold">
-      สุทธิ: <span id="netSalary">0</span>
-    </p>
+  <div class="bg-white p-4 rounded-xl shadow">
+    <p>เข้าสู่ระบบสำเร็จ 🎉</p>
   </div>
 
 </div>
