@@ -3,14 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Money App PRO</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4F46E5">
+<title>Money App</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script type="module" src="app.js"></script>
 </head>
 
@@ -34,10 +30,6 @@
       สมัครสมาชิก
     </button>
 
-    <button onclick="forgotPassword()" class="w-full py-2 bg-gray-200 rounded-xl">
-      ลืมรหัสผ่าน
-    </button>
-
     <button onclick="googleLogin()" class="w-full py-3 bg-red-500 text-white rounded-xl">
       Google
     </button>
@@ -48,7 +40,6 @@
 <!-- APP -->
 <div id="appBox" class="hidden max-w-md mx-auto p-4 space-y-4">
 
-  <!-- profile -->
   <div class="flex items-center gap-3">
     <img id="avatar" class="w-12 h-12 rounded-full">
     <div>
@@ -57,10 +48,10 @@
     </div>
   </div>
 
-  <!-- upload avatar -->
-  <input type="file" id="uploadAvatar" class="border p-2 w-full">
+  <!-- upload profile -->
+  <input type="file" id="fileInput" class="border p-2 w-full">
   <button onclick="uploadAvatar()" class="bg-indigo-500 text-white p-2 rounded">
-    อัปโหลดรูป
+    อัปโหลดรูปโปรไฟล์
   </button>
 
   <!-- add transaction -->
@@ -70,34 +61,11 @@
       <option value="expense">รายจ่าย</option>
     </select>
 
-    <select id="category" class="w-full border p-2 rounded">
-      <option value="food">อาหาร</option>
-      <option value="travel">เดินทาง</option>
-      <option value="bill">บิล</option>
-      <option value="shopping">ช้อปปิ้ง</option>
-    </select>
-
     <input id="amount" type="number" placeholder="จำนวนเงิน" class="w-full border p-2 rounded">
 
     <button onclick="addTransaction()" class="w-full bg-indigo-500 text-white py-2 rounded-xl">
-      บันทึก
+      บันทึกข้อมูล
     </button>
-  </div>
-
-  <!-- chart -->
-  <div class="bg-white p-4 rounded-xl shadow">
-    <canvas id="chart"></canvas>
-  </div>
-
-  <!-- export -->
-  <button onclick="exportExcel()" class="w-full bg-green-500 text-white p-2 rounded">
-    Export Excel
-  </button>
-
-  <!-- AI -->
-  <div class="bg-white p-4 rounded-xl shadow">
-    <h3 class="font-bold">AI วิเคราะห์การเงิน</h3>
-    <p id="aiResult"></p>
   </div>
 
 </div>
