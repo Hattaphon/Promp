@@ -1,11 +1,14 @@
 // ================== IMPORT FIREBASE ==================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
@@ -14,6 +17,7 @@ import {
   push,
   onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 // ================== FIREBASE CONFIG ==================
 const firebaseConfig = {
@@ -27,6 +31,7 @@ const firebaseConfig = {
   measurementId: "G-YLL5SJ6X1S"
 };
 
+
 // ================== INIT ==================
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -36,7 +41,8 @@ const db = getDatabase(app);
 let currentUser = null;
 let loginLoading = false;
 
-// ================== LOGIN ==================
+
+// ================== GOOGLE LOGIN ==================
 window.googleLogin = function () {
 
   if (loginLoading) return;
@@ -52,10 +58,46 @@ window.googleLogin = function () {
     .finally(() => loginLoading = false);
 };
 
+
+// ================== EMAIL REGISTER ==================
+window.emailRegister = function () {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    alert("กรอก Gmail และรหัสผ่านก่อน");
+    return;
+  }
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => alert("สมัครสมาชิกสำเร็จ"))
+    .catch(err => alert(err.message));
+};
+
+
+// ================== EMAIL LOGIN ==================
+window.emailLogin = function () {
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    alert("กรอก Gmail และรหัสผ่านก่อน");
+    return;
+  }
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => console.log("login success"))
+    .catch(err => alert(err.message));
+};
+
+
 // ================== LOGOUT ==================
 window.logout = function () {
   signOut(auth);
 };
+
 
 // ================== CHECK LOGIN STATE ==================
 onAuthStateChanged(auth, (user) => {
@@ -72,6 +114,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById("appBox").classList.add("hidden");
   }
 });
+
 
 // ================== ADD TRANSACTION ==================
 window.addTransaction = function () {
@@ -93,7 +136,8 @@ window.addTransaction = function () {
   document.getElementById("amount").value = "";
 };
 
-// ================== LOAD DATA FROM FIREBASE ==================
+
+// ================== LOAD DATA ==================
 function loadTransactions() {
 
   const txRef = ref(db, "transactions/" + currentUser.uid);
@@ -115,6 +159,7 @@ function loadTransactions() {
     document.getElementById("balance").innerText = income - expense;
   });
 }
+
 
 // ================== CALC SALARY ==================
 window.calcSalary = function () {
