@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money App</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4F46E5">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module" src="app.js"></script>
+</head>
+
+<body class="bg-slate-100">
+
+<!-- LOGIN -->
+<div id="loginBox" class="h-screen flex items-center justify-center">
+  <div class="bg-white p-6 rounded-2xl w-80 text-center shadow">
+    <h1 class="text-xl font-bold mb-4">💰 Money App</h1>
+    <button onclick="googleLogin()"
+      class="w-full py-3 bg-red-500 text-white rounded-xl">
+      🔐 เข้าสู่ระบบด้วย Google
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appBox" class="hidden max-w-md mx-auto p-4 space-y-4">
+
+  <div class="flex justify-between items-center">
+    <h2 class="font-bold">📊 สรุปเดือนนี้</h2>
+    <button onclick="logout()" class="text-red-500">ออก</button>
+  </div>
+
+  <div class="grid grid-cols-3 gap-2 text-center">
+    <div class="bg-green-100 p-3 rounded-xl">
+      <p class="text-sm">รายรับ</p>
+      <p id="income" class="font-bold">0</p>
+    </div>
+    <div class="bg-rose-100 p-3 rounded-xl">
+      <p class="text-sm">รายจ่าย</p>
+      <p id="expense" class="font-bold">0</p>
+    </div>
+    <div class="bg-indigo-100 p-3 rounded-xl">
+      <p class="text-sm">คงเหลือ</p>
+      <p id="balance" class="font-bold">0</p>
+    </div>
+  </div>
+
+  <!-- ADD TRANSACTION -->
+  <div class="bg-white p-4 rounded-xl shadow space-y-2">
+    <select id="type" class="w-full border p-2 rounded">
+      <option value="income">➕ รายรับ</option>
+      <option value="expense">➖ รายจ่าย</option>
+    </select>
+    <input id="amount" type="number" class="w-full border p-2 rounded" placeholder="จำนวนเงิน">
+    <button onclick="addTransaction()"
+      class="w-full bg-indigo-500 text-white py-2 rounded-xl">
+      บันทึก
+    </button>
+  </div>
+
+  <!-- SALARY -->
+  <div class="bg-white p-4 rounded-xl shadow space-y-2">
+    <h3 class="font-bold">💵 คำนวณเงินเดือน</h3>
+    <input id="salary" type="number" class="border p-2 w-full" placeholder="เงินเดือน">
+    <input id="ot1" type="number" class="border p-2 w-full" placeholder="OT x1">
+    <input id="ot15" type="number" class="border p-2 w-full" placeholder="OT x1.5">
+    <input id="ot2" type="number" class="border p-2 w-full" placeholder="OT x2">
+    <button onclick="calcSalary()" class="w-full bg-emerald-500 text-white py-2 rounded-xl">
+      คำนวณ
+    </button>
+    <p class="text-center font-bold">สุทธิ: <span id="netSalary">0</span></p>
+  </div>
+
+</div>
+
+</body>
+</html>
