@@ -1,178 +1,126 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut,
-  sendPasswordResetEmail,
-  updateProfile
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
+  signOut, sendPasswordResetEmail, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  getDatabase,
-  ref,
-  set,
-  push,
-  onValue
+  getDatabase, ref, set, push, onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// ===== Firebase Config =====
+import {
+  getStorage, ref as sRef, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
-  authDomain: "new-936d3.firebaseapp.com",
-  databaseURL: "https://new-936d3-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "new-936d3",
-  storageBucket: "new-936d3.firebasestorage.app",
-  messagingSenderId: "604342411417",
-  appId: "1:604342411417:web:9706905a869fbdb2bc5808"
+ apiKey:"AIzaSy...",
+ authDomain:"new-936d3.firebaseapp.com",
+ databaseURL:"https://new-936d3-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"new-936d3",
+ storageBucket:"new-936d3.appspot.com",
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const provider = new GoogleAuthProvider();
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getDatabase(app);
+const storage=getStorage(app);
+const provider=new GoogleAuthProvider();
 
 let chart;
 
-// ===== LOGIN EMAIL =====
-window.loginEmail = async () => {
-  const email = emailInput();
-  const password = passInput();
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    if (err.code === "auth/wrong-password")
-      alert("รหัสผ่านผิด");
-    else if (err.code === "auth/user-not-found")
-      alert("ไม่พบอีเมลนี้");
-    else alert(err.message);
-  }
+// login
+window.loginEmail=async()=>{
+ try{
+  await signInWithEmailAndPassword(auth,email.value,password.value);
+ }catch(e){
+  if(e.code==="auth/wrong-password") alert("รหัสผิด");
+  else if(e.code==="auth/user-not-found") alert("ไม่พบ email");
+ }
 };
 
-// ===== REGISTER =====
-window.registerEmail = async () => {
-  const name = document.getElementById("name").value;
-  const email = emailInput();
-  const password = passInput();
-
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-    await updateProfile(userCred.user, {
-      displayName: name,
-      photoURL: "https://i.pravatar.cc/150"
-    });
-
-    await set(ref(db, "users/" + userCred.user.uid), {
-      name,
-      email
-    });
-
-    alert("สมัครสำเร็จ");
-  } catch (err) {
-    if (err.code === "auth/email-already-in-use")
-      alert("อีเมลถูกใช้แล้ว");
-    else if (err.code === "auth/weak-password")
-      alert("รหัสต้อง 6 ตัวขึ้นไป");
-    else alert(err.message);
-  }
+// register
+window.registerEmail=async()=>{
+ const u=await createUserWithEmailAndPassword(auth,email.value,password.value);
+ await updateProfile(u.user,{displayName:name.value,photoURL:"https://i.pravatar.cc/150"});
+ await set(ref(db,"users/"+u.user.uid),{name:name.value,email:email.value});
 };
 
-// ===== GOOGLE LOGIN =====
-window.googleLogin = async () => {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch {}
+// google
+window.googleLogin=()=>signInWithPopup(auth,provider);
+
+// forgot
+window.forgotPassword=()=>sendPasswordResetEmail(auth,email.value);
+
+// logout
+window.logout=()=>signOut(auth);
+
+// avatar upload
+window.uploadAvatar=async()=>{
+ const file=uploadAvatar.files[0];
+ const uid=auth.currentUser.uid;
+ const storageRef=sRef(storage,"avatars/"+uid);
+ await uploadBytes(storageRef,file);
+ const url=await getDownloadURL(storageRef);
+ await updateProfile(auth.currentUser,{photoURL:url});
+ avatar.src=url;
 };
 
-// ===== RESET PASSWORD =====
-window.forgotPassword = async () => {
-  const email = emailInput();
-  if (!email) return alert("กรอกอีเมลก่อน");
-
-  await sendPasswordResetEmail(auth, email);
-  alert("ส่งลิงก์รีเซ็ตรหัสแล้ว");
+// transaction
+window.addTransaction=()=>{
+ push(ref(db,"transactions/"+auth.currentUser.uid),{
+  type:type.value,
+  category:category.value,
+  amount:Number(amount.value),
+  date:Date.now()
+ });
 };
 
-// ===== LOGOUT =====
-window.logout = () => signOut(auth);
-
-// ===== TRANSACTION =====
-window.addTransaction = () => {
-  const type = document.getElementById("type").value;
-  const amount = document.getElementById("amount").value;
-  const uid = auth.currentUser.uid;
-
-  push(ref(db, "transactions/" + uid), {
-    type,
-    amount,
-    date: Date.now()
-  });
-};
-
-// ===== AUTH STATE =====
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginBox.hide();
-    appBox.show();
-
-    displayUser(user);
-    loadChart(user.uid);
-  } else {
-    loginBox.show();
-    appBox.hide();
-  }
+// auth state
+onAuthStateChanged(auth,user=>{
+ if(user){
+  loginBox.classList.add("hidden");
+  appBox.classList.remove("hidden");
+  displayName.innerText=user.displayName;
+  avatar.src=user.photoURL;
+  loadChart(user.uid);
+ }
 });
 
-// ===== UI =====
-function loginBox() { return document.getElementById("loginBox"); }
-function appBox() { return document.getElementById("appBox"); }
-loginBox.hide = () => loginBox().classList.add("hidden");
-loginBox.show = () => loginBox().classList.remove("hidden");
-appBox.hide = () => appBox().classList.add("hidden");
-appBox.show = () => appBox().classList.remove("hidden");
-
-function emailInput(){ return document.getElementById("email").value }
-function passInput(){ return document.getElementById("password").value }
-
-// ===== USER PROFILE =====
-function displayUser(user){
-  document.getElementById("displayName").innerText = user.displayName || user.email;
-  document.getElementById("avatar").src = user.photoURL || "https://i.pravatar.cc/150";
-}
-
-// ===== CHART =====
+// chart
 function loadChart(uid){
-  onValue(ref(db,"transactions/"+uid), snap=>{
-    const data = snap.val() || {};
-    let income=0, expense=0;
-
-    Object.values(data).forEach(t=>{
-      if(t.type=="income") income+=Number(t.amount);
-      else expense+=Number(t.amount);
-    });
-
-    drawChart(income,expense);
+ onValue(ref(db,"transactions/"+uid),snap=>{
+  let income=0,expense=0;
+  Object.values(snap.val()||{}).forEach(t=>{
+   if(t.type==="income") income+=t.amount;
+   else expense+=t.amount;
   });
+  drawChart(income,expense);
+  aiAnalyze(income,expense);
+ });
 }
 
-function drawChart(income,expense){
-  const ctx=document.getElementById("chart");
+function drawChart(i,e){
+ if(chart) chart.destroy();
+ chart=new Chart(chart,{
+  type:"doughnut",
+  data:{labels:["รายรับ","รายจ่าย"],datasets:[{data:[i,e]}]}
+ });
+}
 
-  if(chart) chart.destroy();
+// export excel
+window.exportExcel=()=>{
+ alert("ต่อ Google Sheet export ภายหลังได้");
+};
 
-  chart=new Chart(ctx,{
-    type:"doughnut",
-    data:{
-      labels:["รายรับ","รายจ่าย"],
-      datasets:[{
-        data:[income,expense]
-      }]
-    }
-  });
+// AI analyze
+function aiAnalyze(income,expense){
+ let msg="";
+
+ if(expense>income) msg="ใช้เงินเกินรายรับ";
+ else if(expense>income*0.7) msg="เริ่มใช้เงินเยอะ";
+ else msg="การเงินดีมาก";
+
+ aiResult.innerText=msg;
 }
