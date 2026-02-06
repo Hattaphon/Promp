@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Money App</title>
+<title>Money App PRO</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4F46E5">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,35 +22,24 @@
 
     <h1 class="text-xl font-bold">💰 Money App</h1>
 
-    <input id="name" type="text" placeholder="ชื่อ"
-      class="w-full border p-2 rounded">
+    <input id="name" type="text" placeholder="ชื่อ" class="w-full border p-2 rounded">
+    <input id="email" type="email" placeholder="Email" class="w-full border p-2 rounded">
+    <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded">
 
-    <input id="email" type="email" placeholder="Email"
-      class="w-full border p-2 rounded">
-
-    <input id="password" type="password" placeholder="Password"
-      class="w-full border p-2 rounded">
-
-    <button onclick="loginEmail()"
-      class="w-full py-3 bg-indigo-500 text-white rounded-xl">
-      🔐 เข้าสู่ระบบ
+    <button onclick="loginEmail()" class="w-full py-3 bg-indigo-500 text-white rounded-xl">
+      เข้าสู่ระบบ
     </button>
 
-    <button onclick="registerEmail()"
-      class="w-full py-3 bg-green-500 text-white rounded-xl">
-      📝 สมัครสมาชิก
+    <button onclick="registerEmail()" class="w-full py-3 bg-green-500 text-white rounded-xl">
+      สมัครสมาชิก
     </button>
 
-    <button onclick="forgotPassword()"
-      class="w-full py-2 bg-gray-200 rounded-xl">
+    <button onclick="forgotPassword()" class="w-full py-2 bg-gray-200 rounded-xl">
       ลืมรหัสผ่าน
     </button>
 
-    <p class="text-sm text-gray-400">หรือ</p>
-
-    <button onclick="googleLogin()"
-      class="w-full py-3 bg-red-500 text-white rounded-xl">
-      🔐 Google
+    <button onclick="googleLogin()" class="w-full py-3 bg-red-500 text-white rounded-xl">
+      Google
     </button>
 
   </div>
@@ -56,33 +48,56 @@
 <!-- APP -->
 <div id="appBox" class="hidden max-w-md mx-auto p-4 space-y-4">
 
+  <!-- profile -->
   <div class="flex items-center gap-3">
-    <img id="avatar" class="w-12 h-12 rounded-full" src="">
+    <img id="avatar" class="w-12 h-12 rounded-full">
     <div>
       <p id="displayName" class="font-bold"></p>
-      <button onclick="logout()" class="text-red-500 text-sm">ออกจากระบบ</button>
+      <button onclick="logout()" class="text-red-500 text-sm">ออก</button>
     </div>
   </div>
 
-  <!-- เพิ่มรายการ -->
+  <!-- upload avatar -->
+  <input type="file" id="uploadAvatar" class="border p-2 w-full">
+  <button onclick="uploadAvatar()" class="bg-indigo-500 text-white p-2 rounded">
+    อัปโหลดรูป
+  </button>
+
+  <!-- add transaction -->
   <div class="bg-white p-4 rounded-xl shadow space-y-2">
     <select id="type" class="w-full border p-2 rounded">
       <option value="income">รายรับ</option>
       <option value="expense">รายจ่าย</option>
     </select>
 
-    <input id="amount" type="number" placeholder="จำนวนเงิน"
-      class="w-full border p-2 rounded">
+    <select id="category" class="w-full border p-2 rounded">
+      <option value="food">อาหาร</option>
+      <option value="travel">เดินทาง</option>
+      <option value="bill">บิล</option>
+      <option value="shopping">ช้อปปิ้ง</option>
+    </select>
 
-    <button onclick="addTransaction()"
-      class="w-full bg-indigo-500 text-white py-2 rounded-xl">
+    <input id="amount" type="number" placeholder="จำนวนเงิน" class="w-full border p-2 rounded">
+
+    <button onclick="addTransaction()" class="w-full bg-indigo-500 text-white py-2 rounded-xl">
       บันทึก
     </button>
   </div>
 
-  <!-- กราฟ -->
+  <!-- chart -->
   <div class="bg-white p-4 rounded-xl shadow">
     <canvas id="chart"></canvas>
+  </div>
+
+  <!-- export -->
+  <button onclick="exportExcel()" class="w-full bg-green-500 text-white p-2 rounded">
+    Export Excel
+  </button>
+
+  <!-- AI -->
+  <div class="bg-white p-4 rounded-xl shadow">
+    <h3 class="font-bold">AI วิเคราะห์การเงิน</h3>
+    <p id="aiResult"></p>
   </div>
 
 </div>
