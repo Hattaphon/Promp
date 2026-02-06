@@ -1,4 +1,4 @@
-// IMPORT FIREBASE
+// ================== IMPORT FIREBASE ==================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -15,7 +15,7 @@ import {
   onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// CONFIG
+// ================== FIREBASE CONFIG ==================
 const firebaseConfig = {
   apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
   authDomain: "new-936d3.firebaseapp.com",
@@ -27,28 +27,39 @@ const firebaseConfig = {
   measurementId: "G-YLL5SJ6X1S"
 };
 
-// INIT
+// ================== INIT ==================
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getDatabase(app);
 
 let currentUser = null;
+let loginLoading = false;
 
-// LOGIN
+// ================== LOGIN ==================
 window.googleLogin = function () {
+
+  if (loginLoading) return;
+  loginLoading = true;
+
   signInWithPopup(auth, provider)
     .then(() => console.log("login success"))
-    .catch(err => alert(err.message));
+    .catch(err => {
+      if (err.code !== "auth/cancelled-popup-request") {
+        alert(err.message);
+      }
+    })
+    .finally(() => loginLoading = false);
 };
 
-// LOGOUT
+// ================== LOGOUT ==================
 window.logout = function () {
   signOut(auth);
 };
 
-// CHECK LOGIN
+// ================== CHECK LOGIN STATE ==================
 onAuthStateChanged(auth, (user) => {
+
   if (user) {
     currentUser = user;
 
@@ -62,32 +73,39 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ADD TRANSACTION
+// ================== ADD TRANSACTION ==================
 window.addTransaction = function () {
+
   const type = document.getElementById("type").value;
   const amount = Number(document.getElementById("amount").value);
 
-  if (!amount) return alert("ใส่จำนวนเงินก่อน");
+  if (!amount) {
+    alert("ใส่จำนวนเงินก่อน");
+    return;
+  }
 
   push(ref(db, "transactions/" + currentUser.uid), {
-    type,
-    amount,
+    type: type,
+    amount: amount,
     date: Date.now()
   });
 
   document.getElementById("amount").value = "";
 };
 
-// LOAD DATA
+// ================== LOAD DATA FROM FIREBASE ==================
 function loadTransactions() {
+
   const txRef = ref(db, "transactions/" + currentUser.uid);
 
   onValue(txRef, (snapshot) => {
+
     let income = 0;
     let expense = 0;
 
     snapshot.forEach(item => {
       const data = item.val();
+
       if (data.type === "income") income += data.amount;
       if (data.type === "expense") expense += data.amount;
     });
@@ -98,14 +116,19 @@ function loadTransactions() {
   });
 }
 
-// CALC SALARY
+// ================== CALC SALARY ==================
 window.calcSalary = function () {
+
   const salary = Number(document.getElementById("salary").value || 0);
   const ot1 = Number(document.getElementById("ot1").value || 0);
   const ot15 = Number(document.getElementById("ot15").value || 0);
   const ot2 = Number(document.getElementById("ot2").value || 0);
 
-  const total = salary + (ot1 * 100) + (ot15 * 150) + (ot2 * 200);
+  const total =
+    salary +
+    (ot1 * 100) +
+    (ot15 * 150) +
+    (ot2 * 200);
 
   document.getElementById("netSalary").innerText = total;
 };
