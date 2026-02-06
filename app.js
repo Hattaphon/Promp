@@ -1,93 +1,111 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+// IMPORT FIREBASE
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   getDatabase,
   ref,
   push,
   onValue
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* 🔥 ใส่ของคุณ */
+// CONFIG
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "YOUR_PROJECT",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
+  authDomain: "new-936d3.firebaseapp.com",
+  databaseURL: "https://new-936d3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "new-936d3",
+  storageBucket: "new-936d3.firebasestorage.app",
+  messagingSenderId: "604342411417",
+  appId: "1:604342411417:web:9706905a869fbdb2bc5808",
+  measurementId: "G-YLL5SJ6X1S"
 };
 
+// INIT
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
 const provider = new GoogleAuthProvider();
+const db = getDatabase(app);
 
-let user;
+let currentUser = null;
 
-/* AUTH */
-window.googleLogin = () => signInWithPopup(auth, provider);
-window.logout = () => signOut(auth);
+// LOGIN
+window.googleLogin = function () {
+  signInWithPopup(auth, provider)
+    .then(() => console.log("login success"))
+    .catch(err => alert(err.message));
+};
 
-onAuthStateChanged(auth, u => {
-  if (u) {
-    user = u;
-    loginBox.classList.add('hidden');
-    appBox.classList.remove('hidden');
-    loadMonthly();
+// LOGOUT
+window.logout = function () {
+  signOut(auth);
+};
+
+// CHECK LOGIN
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("appBox").classList.remove("hidden");
+
+    loadTransactions();
   } else {
-    loginBox.classList.remove('hidden');
-    appBox.classList.add('hidden');
+    document.getElementById("loginBox").classList.remove("hidden");
+    document.getElementById("appBox").classList.add("hidden");
   }
 });
 
-/* TRANSACTION */
-window.addTransaction = () => {
-  push(ref(db, `users/${user.uid}/data`), {
-    type: type.value,
-    amount: Number(amount.value),
-    month: new Date().getMonth()
+// ADD TRANSACTION
+window.addTransaction = function () {
+  const type = document.getElementById("type").value;
+  const amount = Number(document.getElementById("amount").value);
+
+  if (!amount) return alert("ใส่จำนวนเงินก่อน");
+
+  push(ref(db, "transactions/" + currentUser.uid), {
+    type,
+    amount,
+    date: Date.now()
   });
-  amount.value = '';
+
+  document.getElementById("amount").value = "";
 };
 
-function loadMonthly() {
-  onValue(ref(db, `users/${user.uid}/data`), snap => {
-    let inc = 0, exp = 0;
-    const m = new Date().getMonth();
-    snap.forEach(i => {
-      if (i.val().month === m) {
-        i.val().type === 'income'
-          ? inc += i.val().amount
-          : exp += i.val().amount;
-      }
+// LOAD DATA
+function loadTransactions() {
+  const txRef = ref(db, "transactions/" + currentUser.uid);
+
+  onValue(txRef, (snapshot) => {
+    let income = 0;
+    let expense = 0;
+
+    snapshot.forEach(item => {
+      const data = item.val();
+      if (data.type === "income") income += data.amount;
+      if (data.type === "expense") expense += data.amount;
     });
-    income.textContent = inc;
-    expense.textContent = exp;
-    balance.textContent = inc - exp;
+
+    document.getElementById("income").innerText = income;
+    document.getElementById("expense").innerText = expense;
+    document.getElementById("balance").innerText = income - expense;
   });
 }
 
-/* SALARY */
-window.calcSalary = () => {
-  const base = Number(salary.value);
-  const hr = base / 240;
-  const net =
-    base +
-    hr * ot1.value +
-    hr * 1.5 * ot15.value +
-    hr * 2 * ot2.value -
-    Math.min(base * 0.05, 750);
+// CALC SALARY
+window.calcSalary = function () {
+  const salary = Number(document.getElementById("salary").value || 0);
+  const ot1 = Number(document.getElementById("ot1").value || 0);
+  const ot15 = Number(document.getElementById("ot15").value || 0);
+  const ot2 = Number(document.getElementById("ot2").value || 0);
 
-  netSalary.textContent = Math.round(net);
+  const total = salary + (ot1 * 100) + (ot15 * 150) + (ot2 * 200);
+
+  document.getElementById("netSalary").innerText = total;
 };
-
-/* PWA */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
-}
