@@ -3,12 +3,17 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
  GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
- signOut, updateProfile, setPersistence, browserLocalPersistence
+ signOut, updateProfile, sendPasswordResetEmail,
+ setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
- getDatabase, ref, set
+ getDatabase, ref, set, push, get
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import {
+ getStorage, ref as sRef, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
  apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
@@ -21,141 +26,166 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 
-setPersistence(auth, browserLocalPersistence);
+setPersistence(auth,browserLocalPersistence);
 
-// UI refs
-const nameInput = document.getElementById("name");
-const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
-const loading = document.getElementById("loading");
-const errorBox = document.getElementById("errorBox");
-
-// toggle
-window.showLogin = () => {
- nameInput.classList.add("hidden");
- registerBtn.classList.add("hidden");
+// UI toggle
+window.showLogin = ()=>{
+ name.classList.add("hidden");
  loginBtn.classList.remove("hidden");
+ registerBtn.classList.add("hidden");
 };
 
-window.showRegister = () => {
- nameInput.classList.remove("hidden");
- registerBtn.classList.remove("hidden");
+window.showRegister = ()=>{
+ name.classList.remove("hidden");
  loginBtn.classList.add("hidden");
+ registerBtn.classList.remove("hidden");
 };
 
-// validation
-function validateEmail(email){
- return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// error TH
+function firebaseErrorTH(code){
+ const map={
+  "auth/user-not-found":"ไม่พบบัญชี",
+  "auth/wrong-password":"รหัสผ่านผิด",
+  "auth/email-already-in-use":"อีเมลถูกใช้แล้ว",
+  "auth/invalid-email":"อีเมลไม่ถูกต้อง",
+  "auth/weak-password":"รหัสผ่านขั้นต่ำ 6 ตัว"
+ };
+ return map[code] || code;
 }
 
 function showError(msg){
- errorBox.innerText = msg;
+ errorBox.innerText=msg;
 }
 
-function startLoading(){
- loading.classList.remove("hidden");
+// validation
+function validate(){
+ if(!email.value.includes("@")) return "รูปแบบอีเมลไม่ถูกต้อง";
+ if(password.value.length<6) return "รหัสผ่านต้อง 6 ตัวขึ้นไป";
+ return null;
 }
 
-function stopLoading(){
- loading.classList.add("hidden");
-}
-
-// translate firebase error
-function firebaseErrorTH(code){
-
- const map = {
-  "auth/email-already-in-use":"อีเมลนี้ถูกใช้แล้ว",
-  "auth/invalid-email":"รูปแบบอีเมลไม่ถูกต้อง",
-  "auth/user-not-found":"ไม่พบผู้ใช้นี้",
-  "auth/wrong-password":"รหัสผ่านไม่ถูกต้อง",
-  "auth/weak-password":"รหัสต้องอย่างน้อย 6 ตัว",
- };
-
- return map[code] || "เกิดข้อผิดพลาด";
-}
-
-// LOGIN
-window.loginEmail = async () => {
-
- const email = document.getElementById("email").value;
- const password = document.getElementById("password").value;
-
- if(!validateEmail(email))
-  return showError("อีเมลไม่ถูกต้อง");
-
- if(password.length < 6)
-  return showError("รหัสต้องอย่างน้อย 6 ตัว");
-
- startLoading();
+// login
+window.loginEmail = async ()=>{
+ const err=validate();
+ if(err) return showError(err);
 
  try{
-  await signInWithEmailAndPassword(auth,email,password);
- }catch(e){
-  showError(firebaseErrorTH(e.code));
- }
-
- stopLoading();
+  await signInWithEmailAndPassword(auth,email.value,password.value);
+ }catch(e){ showError(firebaseErrorTH(e.code)); }
 };
 
-// REGISTER
-window.registerEmail = async () => {
-
- const name = document.getElementById("name").value;
- const email = document.getElementById("email").value;
- const password = document.getElementById("password").value;
-
- if(!name) return showError("กรุณาใส่ชื่อ");
-
- if(!validateEmail(email))
-  return showError("อีเมลไม่ถูกต้อง");
-
- if(password.length < 6)
-  return showError("รหัสต้องอย่างน้อย 6 ตัว");
-
- startLoading();
+// register
+window.registerEmail = async ()=>{
+ const err=validate();
+ if(err) return showError(err);
 
  try{
+  const u=await createUserWithEmailAndPassword(auth,email.value,password.value);
 
-  const u = await createUserWithEmailAndPassword(auth,email,password);
-
-  await updateProfile(u.user,{
-   displayName:name,
-   photoURL:"https://i.pravatar.cc/150"
-  });
+  await updateProfile(u.user,{displayName:name.value});
 
   await set(ref(db,"users/"+u.user.uid),{
-   name:name,
-   email:email
+   name:name.value,
+   email:email.value
   });
 
- }catch(e){
-  showError(firebaseErrorTH(e.code));
- }
-
- stopLoading();
+ }catch(e){ showError(firebaseErrorTH(e.code)); }
 };
 
-// GOOGLE
-window.googleLogin = () => signInWithPopup(auth,provider);
+// google
+window.googleLogin = ()=> signInWithPopup(auth,provider);
 
-// LOGOUT
-window.logout = () => signOut(auth);
+// logout
+window.logout = ()=> signOut(auth);
 
-// AUTH STATE
+// reset password
+window.resetPassword = async ()=>{
+ await sendPasswordResetEmail(auth,email.value);
+ alert("ส่งลิงก์รีเซ็ตแล้ว");
+};
+
+// upload avatar
+window.uploadAvatar = async ()=>{
+ const file=fileInput.files[0];
+ const uid=auth.currentUser.uid;
+ const storageRef=sRef(storage,"avatars/"+uid);
+
+ await uploadBytes(storageRef,file);
+ const url=await getDownloadURL(storageRef);
+
+ await updateProfile(auth.currentUser,{photoURL:url});
+ avatar.src=url;
+};
+
+// edit name
+window.updateUserName = async ()=>{
+ await updateProfile(auth.currentUser,{displayName:newName.value});
+ displayName.innerText=newName.value;
+};
+
+// save transaction
+window.addTransaction = async ()=>{
+ const uid=auth.currentUser.uid;
+
+ await push(ref(db,"transactions/"+uid),{
+  type:type.value,
+  amount:Number(amount.value),
+  createdAt:Date.now()
+ });
+
+ loadGraph();
+};
+
+// graph
+async function loadGraph(){
+ const uid=auth.currentUser.uid;
+ const snap=await get(ref(db,"transactions/"+uid));
+
+ let income=0,expense=0;
+
+ Object.values(snap.val()||{}).forEach(t=>{
+  if(t.type=="income") income+=t.amount;
+  else expense+=t.amount;
+ });
+
+ new Chart(financeChart,{
+  type:"bar",
+  data:{
+   labels:["รายรับ","รายจ่าย"],
+   datasets:[{data:[income,expense]}]
+  }
+ });
+}
+
+// admin
+async function checkAdmin(){
+ const uid=auth.currentUser.uid;
+ const snap=await get(ref(db,"admins/"+uid));
+ if(snap.exists()) adminPanel.classList.remove("hidden");
+}
+
+// reward cap
+async function checkRewardLimit(){
+ const uid=auth.currentUser.uid;
+ const snap=await get(ref(db,"rewards/"+uid));
+ const total=snap.val()?.total||0;
+
+ if(total>500) alert("ถึงเพดาน reward");
+}
+
+// auth state
 onAuthStateChanged(auth,user=>{
  if(user){
-
   loginBox.classList.add("hidden");
   appBox.classList.remove("hidden");
 
-  displayName.innerText = user.displayName;
-  displayEmail.innerText = user.email;
-  avatar.src = user.photoURL;
+  displayName.innerText=user.displayName;
+  avatar.src=user.photoURL;
 
- }else{
-  loginBox.classList.remove("hidden");
-  appBox.classList.add("hidden");
+  loadGraph();
+  checkAdmin();
  }
 });
