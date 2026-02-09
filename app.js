@@ -1,18 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
-  signOut, updateProfile
+ getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+ GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
+ signOut, updateProfile, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-  getDatabase, ref, set, push
+ getDatabase, ref, set
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-import {
-  getStorage, ref as sRef, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
  apiKey: "AIzaSyAmhTQ8zV7gH9nsKpZE9P0lmTAunz3tWGc",
@@ -25,80 +21,141 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 
+setPersistence(auth, browserLocalPersistence);
 
-// LOGIN EMAIL
+// UI refs
+const nameInput = document.getElementById("name");
+const loginBtn = document.getElementById("loginBtn");
+const registerBtn = document.getElementById("registerBtn");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("errorBox");
+
+// toggle
+window.showLogin = () => {
+ nameInput.classList.add("hidden");
+ registerBtn.classList.add("hidden");
+ loginBtn.classList.remove("hidden");
+};
+
+window.showRegister = () => {
+ nameInput.classList.remove("hidden");
+ registerBtn.classList.remove("hidden");
+ loginBtn.classList.add("hidden");
+};
+
+// validation
+function validateEmail(email){
+ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function showError(msg){
+ errorBox.innerText = msg;
+}
+
+function startLoading(){
+ loading.classList.remove("hidden");
+}
+
+function stopLoading(){
+ loading.classList.add("hidden");
+}
+
+// translate firebase error
+function firebaseErrorTH(code){
+
+ const map = {
+  "auth/email-already-in-use":"อีเมลนี้ถูกใช้แล้ว",
+  "auth/invalid-email":"รูปแบบอีเมลไม่ถูกต้อง",
+  "auth/user-not-found":"ไม่พบผู้ใช้นี้",
+  "auth/wrong-password":"รหัสผ่านไม่ถูกต้อง",
+  "auth/weak-password":"รหัสต้องอย่างน้อย 6 ตัว",
+ };
+
+ return map[code] || "เกิดข้อผิดพลาด";
+}
+
+// LOGIN
 window.loginEmail = async () => {
- await signInWithEmailAndPassword(auth,email.value,password.value);
+
+ const email = document.getElementById("email").value;
+ const password = document.getElementById("password").value;
+
+ if(!validateEmail(email))
+  return showError("อีเมลไม่ถูกต้อง");
+
+ if(password.length < 6)
+  return showError("รหัสต้องอย่างน้อย 6 ตัว");
+
+ startLoading();
+
+ try{
+  await signInWithEmailAndPassword(auth,email,password);
+ }catch(e){
+  showError(firebaseErrorTH(e.code));
+ }
+
+ stopLoading();
 };
 
 // REGISTER
 window.registerEmail = async () => {
- const u = await createUserWithEmailAndPassword(auth,email.value,password.value);
 
- await updateProfile(u.user,{
-  displayName:name.value,
-  photoURL:"https://i.pravatar.cc/150"
- });
+ const name = document.getElementById("name").value;
+ const email = document.getElementById("email").value;
+ const password = document.getElementById("password").value;
 
- await set(ref(db,"users/"+u.user.uid),{
-  name:name.value,
-  email:email.value
- });
+ if(!name) return showError("กรุณาใส่ชื่อ");
+
+ if(!validateEmail(email))
+  return showError("อีเมลไม่ถูกต้อง");
+
+ if(password.length < 6)
+  return showError("รหัสต้องอย่างน้อย 6 ตัว");
+
+ startLoading();
+
+ try{
+
+  const u = await createUserWithEmailAndPassword(auth,email,password);
+
+  await updateProfile(u.user,{
+   displayName:name,
+   photoURL:"https://i.pravatar.cc/150"
+  });
+
+  await set(ref(db,"users/"+u.user.uid),{
+   name:name,
+   email:email
+  });
+
+ }catch(e){
+  showError(firebaseErrorTH(e.code));
+ }
+
+ stopLoading();
 };
 
-// GOOGLE LOGIN
+// GOOGLE
 window.googleLogin = () => signInWithPopup(auth,provider);
 
 // LOGOUT
 window.logout = () => signOut(auth);
 
-// UPLOAD PROFILE REAL
-window.uploadAvatar = async () => {
-
- const file = document.getElementById("fileInput").files[0];
- if(!file) return alert("เลือกรูปก่อน");
-
- const uid = auth.currentUser.uid;
-
- const storageRef = sRef(storage,"avatars/"+uid);
-
- await uploadBytes(storageRef,file);
-
- const url = await getDownloadURL(storageRef);
-
- await updateProfile(auth.currentUser,{photoURL:url});
-
- document.getElementById("avatar").src = url;
-
- alert("อัปโหลดรูปสำเร็จ");
-};
-
-
-// SAVE TRANSACTION REALTIME DB
-window.addTransaction = async () => {
-
- const uid = auth.currentUser.uid;
-
- await push(ref(db,"transactions/"+uid),{
-  type:type.value,
-  amount:Number(amount.value),
-  createdAt:Date.now()
- });
-
- alert("บันทึกข้อมูลแล้ว");
-};
-
-
 // AUTH STATE
 onAuthStateChanged(auth,user=>{
  if(user){
+
   loginBox.classList.add("hidden");
   appBox.classList.remove("hidden");
 
-  displayName.innerText=user.displayName;
-  avatar.src=user.photoURL;
+  displayName.innerText = user.displayName;
+  displayEmail.innerText = user.email;
+  avatar.src = user.photoURL;
+
+ }else{
+  loginBox.classList.remove("hidden");
+  appBox.classList.add("hidden");
  }
 });
